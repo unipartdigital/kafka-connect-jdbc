@@ -1,0 +1,40 @@
+language: java
+
+jdk: openjdk8
+
+before_install:
+  # https://github.com/confluentinc/kafka-connect-jdbc/wiki/FAQ
+  # Note: This assumes that the snapshot version in pom.xml match these master upstream versions (e.g. we are up to
+  # date with upstream master. This version will change after confluent release a new version so we should either
+  # update our master or pin the dependencies in pom.xml to the released version.
+  - git clone https://github.com/confluentinc/kafka.git && pushd kafka && ./gradlew installAll && popd
+  - git clone https://github.com/confluentinc/common && pushd common && mvn install && popd
+
+script:
+  - mvn clean package
+
+before_deploy:
+  - docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+
+deploy:
+  # Tests already run as part of default build
+  - provider: script
+    skip_cleanup: true
+    script: docker build -t ${TRAVIS_REPO_SLUG}:5.4.1-latest . && docker push ${TRAVIS_REPO_SLUG}:5.4.1-latest
+    on:
+      branch: 5.4.1-post
+  - provider: script
+    skip_cleanup: true
+    script: docker build -t ${TRAVIS_REPO_SLUG}:&{TRAVIS_TAG} . && docker push ${TRAVIS_REPO_SLUG}:${TRAVIS_TAG}
+    on:
+      tags: true
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.m2
