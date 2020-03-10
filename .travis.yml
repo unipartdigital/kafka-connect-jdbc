@@ -2,30 +2,30 @@ language: java
 
 jdk: openjdk8
 
+# Note: .travis/set_env.sh exports some environment variables *common* to build deploy steps
 before_install:
-  # https://github.com/confluentinc/kafka-connect-jdbc/wiki/FAQ
-  # Note: This assumes that the snapshot version in pom.xml match these master upstream versions (e.g. we are up to
-  # date with upstream master. This version will change after confluent release a new version so we should either
-  # update our master or pin the dependencies in pom.xml to the released version.
-  - git clone https://github.com/confluentinc/kafka.git && pushd kafka && ./gradlew installAll && popd
-  - git clone https://github.com/confluentinc/common && pushd common && mvn install && popd
-
-script:
-  - mvn clean package
+  - source .travis/set_env.sh
 
 before_deploy:
-  - docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+  - source .travis/set_env.sh
+  - docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
 
+script: .travis/build.sh ${DOCKERHUB_REPO} ${JAR_VERSION}
+
+# Note: pom.xml version is updated as part of ./travis/build.sh script to ensure the jar version matches the Docker
+# image tag - this change is *not* committed automatically as part of the build
 deploy:
-  # Tests already run as part of default build
+  # Push a `-latest` image for our `5.4.1-post` branch with patches to upstream 5.4.1
   - provider: script
     skip_cleanup: true
-    script: docker build -t ${TRAVIS_REPO_SLUG}:5.4.1-latest . && docker push ${TRAVIS_REPO_SLUG}:5.4.1-latest
+    script: .travis/docker_release.sh ${DOCKERHUB_REPO}:latest ${DOCKERHUB_REPO}:5.4.1-latest
     on:
       branch: 5.4.1-post
+  # Push an image for git tags (e.g. our patched 'release" of an upstream version)
+  # See comment in pom.xml for naming convention
   - provider: script
     skip_cleanup: true
-    script: docker build -t ${TRAVIS_REPO_SLUG}:&{TRAVIS_TAG} . && docker push ${TRAVIS_REPO_SLUG}:${TRAVIS_TAG}
+    script: .travis/docker_release.sh ${DOCKERHUB_REPO}:latest ${DOCKERHUB_REPO}:${JAR_VERSION}
     on:
       tags: true
 
