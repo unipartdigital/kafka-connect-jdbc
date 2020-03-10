@@ -600,7 +600,8 @@ public class GenericDatabaseDialect implements DatabaseDialect {
         final int jdbcType = rs.getInt(5);
         final String typeName = rs.getString(6);
         final int precision = rs.getInt(7);
-        final int scale = rs.getInt(9);
+        int scale = rs.getInt(9);
+        scale = rs.wasNull() ? NUMERIC_TYPE_SCALE_UNSET : scale;
         final String typeClassName = null;
         Nullability nullability;
         final int nullableValue = rs.getInt(11);
