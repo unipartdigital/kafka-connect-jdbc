@@ -25,6 +25,13 @@
         <version>5.4.1</version>
     </parent>
 
+    <!--
+        Unipart Digital patched version
+        Naming convention: <upstream_version>-<our_version> e.g. 5.4.1-1
+        Based off Fedora guidelines https://fedoraproject.org/wiki/Package_Versioning_Examples#Simple_versioning_examples
+    -->
+    <version>5.4.1</version>
+
     <groupId>io.confluent</groupId>
     <artifactId>kafka-connect-jdbc</artifactId>
     <packaging>jar</packaging>
@@ -54,7 +61,7 @@
     </scm>
 
     <properties>
-        <confluent.version>${project.version}</confluent.version>
+        <confluent.version>${project.parent.version}</confluent.version>
         <derby.version>10.14.2.0</derby.version>
         <commons-io.version>2.4</commons-io.version>
         <kafka.connect.maven.plugin.version>0.11.1</kafka.connect.maven.plugin.version>
@@ -62,7 +69,7 @@
         <postgresql.version>42.2.10</postgresql.version>
         <jtds.driver.version>1.3.1</jtds.driver.version>
         <licenses.name>Confluent Community License</licenses.name>
-        <licenses.version>${project.version}</licenses.version>
+        <licenses.version>${project.parent.version}</licenses.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.package.home>target/${project.artifactId}-${project.version}-package</project.package.home>
         <confluent.maven.repo>http://packages.confluent.io/maven/</confluent.maven.repo>
@@ -72,7 +79,12 @@
         <repository>
             <id>confluent</id>
             <name>Confluent</name>
-            <url>${confluent.maven.repo}</url>
+            <!--
+                Not using variable in <properties> as interpolation doesn't seem to work within <repository> tags
+                https://github.com/confluentinc/kafka-connect-hdfs/issues/311#issuecomment-473929360
+                http://maven.40175.n5.nabble.com/Settings-properties-not-resolved-when-used-in-repository-element-td5746974.html
+            -->
+            <url>http://packages.confluent.io/maven/</url>
         </repository>
     </repositories>
 
@@ -189,7 +201,7 @@
                         </goals>
                         <configuration>
                             <title>Kafka Connect JDBC</title>
-                            <documentationUrl>https://docs.confluent.io/${project.version}/connect/connect-jdbc/docs/index.html</documentationUrl>
+                            <documentationUrl>https://docs.confluent.io/${project.parent.version}/connect/connect-jdbc/docs/index.html</documentationUrl>
                             <description>
                                 The JDBC source and sink connectors allow you to exchange data between relational databases and Kafka.
 
@@ -339,7 +351,7 @@
                             <needarch>noarch</needarch>
                             <targetOS>linux</targetOS>
                             <requires>
-                                <require>confluent-common = ${project.version}</require>
+                                <require>confluent-common = ${project.parent.version}</require>
                             </requires>
                             <mappings>
                                 <mapping>
